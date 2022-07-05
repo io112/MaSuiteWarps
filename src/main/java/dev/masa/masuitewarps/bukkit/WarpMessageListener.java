@@ -9,6 +9,7 @@ import org.bukkit.entity.Player;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.UUID;
 
 public class WarpMessageListener implements org.bukkit.plugin.messaging.PluginMessageListener {
@@ -29,18 +30,15 @@ public class WarpMessageListener implements org.bukkit.plugin.messaging.PluginMe
         try {
             subchannel = in.readUTF();
             if (subchannel.equals("WarpPlayer")) {
-                Player p = Bukkit.getPlayer(UUID.fromString(in.readUTF()));
-                if (p == null) {
-                    return;
-                }
+                UUID uid = UUID.fromString(in.readUTF());
                 Location loc = new Location().deserialize(in.readUTF());
-
                 org.bukkit.Location bukkitLocation = BukkitAdapter.adapt(loc);
                 if (bukkitLocation.getWorld() == null) {
-                    System.out.println("[MaSuite] [Warps] [World=" + loc.getWorld() + "] World  could not be found!");
+                    this.plugin.getLogger().info("[MaSuite] [Warps] [World=" + loc.getWorld() + "] World  could not be found!");
                     return;
                 }
-                p.teleport(bukkitLocation);
+
+                this.plugin.pendingPlayers.put(uid, bukkitLocation);
             }
             if (subchannel.equals("CreateWarp")) {
                 Warp warp = new Warp();

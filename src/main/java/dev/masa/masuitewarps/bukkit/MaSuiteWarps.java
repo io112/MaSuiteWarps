@@ -6,17 +6,17 @@ import dev.masa.masuitecore.core.Updator;
 import dev.masa.masuitecore.core.api.MaSuiteCoreBukkitAPI;
 import dev.masa.masuitecore.core.channels.BukkitPluginChannel;
 import dev.masa.masuitecore.core.configuration.BukkitConfiguration;
+import dev.masa.masuitecore.core.objects.Location;
 import dev.masa.masuitecore.core.utils.CommandManagerUtil;
 import dev.masa.masuitewarps.bukkit.commands.WarpCommand;
 import dev.masa.masuitewarps.core.models.Warp;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 public class MaSuiteWarps extends JavaPlugin implements Listener {
 
@@ -29,6 +29,8 @@ public class MaSuiteWarps extends JavaPlugin implements Listener {
 
     private boolean requestedPerServerWarps = false;
     public boolean perServerWarps = false;
+
+    public HashMap<UUID, org.bukkit.Location> pendingPlayers = new HashMap<>();
 
 
     @Override
@@ -77,6 +79,15 @@ public class MaSuiteWarps extends JavaPlugin implements Listener {
         if (!requestedPerServerWarps) {
             getServer().getScheduler().runTaskLaterAsynchronously(this, () -> new BukkitPluginChannel(this, e.getPlayer(), "CheckPerWarpFlag", e.getPlayer().getName()).send(), 100);
             requestedPerServerWarps = true;
+        }
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onPlayerJoin(PlayerJoinEvent event) {
+        UUID key = event.getPlayer().getUniqueId();
+        if (this.pendingPlayers.containsKey(key)) {
+            event.getPlayer().teleport(this.pendingPlayers.get(key));
+            this.pendingPlayers.remove(key);
         }
     }
 
